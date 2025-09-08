@@ -3,6 +3,7 @@ import { platform } from "os";
 import { cwd } from "process";
 import { join } from "path";
 import { Settings } from "../settings/settings.renderer";
+import { exec } from "child_process";
 
 import {
   app,
@@ -34,6 +35,8 @@ export class Renderer {
   private window: BrowserWindow;
   
   private powerSaveManager: PowerSaveManager;
+  
+  private volumeManager: VolumeManager;
 
   /** Settings window */
   private settings: Settings | null;
@@ -101,6 +104,7 @@ export class Renderer {
     });
     
     this.powerSaveManager = new PowerSaveManager();
+    this.volumeManager = new VolumeManager();
 
     process.nextTick(() => this.loadSettings());
   }
@@ -385,5 +389,31 @@ class PowerSaveManager {
 
   public cleanup() {
     this.allowSleep();
+  }
+}
+
+class VolumeManager {
+  constructor() {
+    this.setupIpcHandlers();
+  }
+
+  private setupIpcHandlers() {
+    ipcMain.on("volume-change", (_, change) => {
+      this.adjustSystemVolume(change);
+    });
+  }
+
+  private adjustSystemVolume(change: string) {
+    const command = `wpctl set-volume @DEFAULT_AUDIO_SINK@ ${change} --limit 1.0`;
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Volume control error: ${error.message}`);
+        return;
+      }
+      if (stderr) {
+        console.error(`Volume control stderr: ${stderr}`);
+        return;
+      }
+    });
   }
 }

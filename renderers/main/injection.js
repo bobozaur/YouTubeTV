@@ -257,6 +257,59 @@ const monitorMediaPlayback = () => {
   setTimeout(checkPlaybackState, 2000);
 };
 
+/**
+ * Intercept volume control and redirect to system volume
+ */
+const interceptVolumeControl = () => {
+  // Intercept any programmatic volume changes to the video elements
+  const interceptVolumeProperty = () => {    
+    const videos = document.querySelectorAll("video");
+    videos.forEach((video) => {
+      if (!video.hasAttribute("data-volume-intercepted")) {
+        // Override the volume property
+        Object.defineProperty(video, "volume", {
+          get: function () {
+            return 1.0; // Always report max volume
+          },
+          set: function (value) {
+            window.ipc.send("volume-change", value);
+            console.log(`Bypassing volume change to system: ${value}`);
+          },
+          configurable: true,
+        });
+
+        video.setAttribute("data-volume-intercepted", "true");
+      }
+    });
+  };
+
+  // Apply volume interception to existing and new videos
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      mutation.addedNodes.forEach((node) => {
+        if (node.nodeType === 1) {
+          if (node.tagName === "VIDEO") {
+            setTimeout(interceptVolumeProperty, 100);
+          } else if (node.querySelectorAll) {
+            const videos = node.querySelectorAll("video");
+            if (videos.length > 0) {
+              setTimeout(interceptVolumeProperty, 100);
+            }
+          }
+        }
+      });
+    });
+  });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
+
+  // Initial setup
+  setTimeout(interceptVolumeProperty(), 1000);
+};
+
 // Carga la anulación de eventos de cambios de visibilidad.
 visibilityChangeOverriding();
 
@@ -274,6 +327,9 @@ listenLocalStorageQueries();
 
 // Monitor media playback for power save management
 monitorMediaPlayback();
+
+// Intercept volume control
+interceptVolumeControl();
 
 console.log(
   "JavaScript enhancements loaded at",
