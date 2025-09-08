@@ -55,7 +55,7 @@ export class Renderer {
 
         // Set app menu to null.
         Menu.setApplicationMenu(null);
-
+        
         app.on('ready', () => {
 
             this.createWindow();
@@ -98,7 +98,8 @@ export class Renderer {
             webPreferences: {
                 nodeIntegration: true,
                 webSecurity: true,
-                contextIsolation: false
+                contextIsolation: false,
+                backgroundThrottling: false
             }
         });
 
