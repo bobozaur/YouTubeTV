@@ -191,19 +191,9 @@ export class Renderer {
    * Listen keyboard shortcuts to perform some actions.
    */
   private setAccelerators() {
-    globalShortcut.register("ctrl+s", () => {
-      if (this.settings) {
-        this.settings.destroy();
-        this.settings = null;
-      } else {
-        this.settings = new Settings();
-      }
-    });
-
-
-    globalShortcut.register("ctrl+d", () => {
-      this.window.webContents.toggleDevTools();
-    });
+    // globalShortcut.register("ctrl+d", () => {
+    //   this.window.webContents.toggleDevTools();
+    // });
   }
 
   /**
