@@ -46,9 +46,7 @@ The project can be downloaded already built and ready to use. Available for Linu
 
 ## ⌨️ Key shortcuts
 - Max. resolution config panel: <kbd>Ctrl</kbd> + <kbd>S</kbd>
-- Fullscreen: <kbd>Ctrl</kbd> + <kbd>F</kbd>.
 - Developer Tools: <kbd>Ctrl</kbd> + <kbd>D</kbd>.
-- Change cursor visibility: <kbd>Ctrl</kbd> + <kbd>A</kbd>.
 
 Not tested on Windows and macOS for ARM platforms, except for ARM Linux for Raspberry (armv7l).
 
