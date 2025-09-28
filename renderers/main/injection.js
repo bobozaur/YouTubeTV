@@ -155,111 +155,22 @@ const loadConnectionEvents = () => {
 };
 
 /**
- * Monitor media playback state to control power save blocking
+ * Monitor media playback and control system integrations (volume and power management)
  */
-const monitorMediaPlayback = () => {
-  let isPlaying = false;
-  let mediaObserver = null;
+const setupMediaControl = () => {
+  console.log("🎮 Media control system loaded");
 
-  // Function to check if any video is currently playing
-  const checkPlaybackState = () => {
-    const videos = document.querySelectorAll("video");
-    let newIsPlaying = false;
-
-    videos.forEach((video) => {
-      if (!video.paused && !video.ended && video.readyState > 2) {
-        newIsPlaying = true;
-      }
-    });
-
-    // Only send IPC message if state changed
-    if (newIsPlaying !== isPlaying) {
-      isPlaying = newIsPlaying;
-
-      if (isPlaying) {
-        window.ipc.send("media-playing");
-        console.log("Media started playing - preventing sleep");
-      } else {
-        window.ipc.send("media-paused");
-        console.log("Media paused/stopped - allowing sleep");
-      }
-    }
-  };
-
-  // Check periodically for playback state
-  setInterval(checkPlaybackState, 1000);
-
-  // Listen for video events more immediately
-  const attachVideoListeners = () => {
-    const videos = document.querySelectorAll("video");
-    videos.forEach((video) => {
-      if (!video.hasAttribute("data-power-save-listener")) {
-        video.addEventListener("play", () => {
-          setTimeout(checkPlaybackState, 100);
-        });
-
-        video.addEventListener("pause", () => {
-          setTimeout(checkPlaybackState, 100);
-        });
-
-        video.addEventListener("ended", () => {
-          setTimeout(checkPlaybackState, 100);
-        });
-
-        video.setAttribute("data-power-save-listener", "true");
-      }
-    });
-  };
-
-  // Attach listeners to existing videos
-  attachVideoListeners();
-
-  // Watch for new video elements being added to the DOM
-  const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-      mutation.addedNodes.forEach((node) => {
-        if (node.nodeType === 1) {
-          // Element node
-          if (node.tagName === "VIDEO") {
-            attachVideoListeners();
-          } else if (node.querySelectorAll) {
-            const videos = node.querySelectorAll("video");
-            if (videos.length > 0) {
-              attachVideoListeners();
-            }
-          }
-        }
-      });
-    });
-  });
-
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-  });
-
-  // Initial check after a short delay to ensure page is loaded
-  setTimeout(checkPlaybackState, 2000);
-};
-
-/**
- * Intercept volume control and redirect to system volume
- */
-const interceptVolumeControl = () => {
-  console.log("🔊 Volume control script loaded");
-
-  function setupVolumeListener() {
+  function setupMediaListener() {
     const videoPlayer = document.querySelector(".html5-video-player");
     const video = videoPlayer ? videoPlayer.querySelector("video") : null;
 
     if (!video) {
-      setTimeout(setupVolumeListener, 500);
+      setTimeout(setupMediaListener, 500);
       return;
     }
 
-    if (video._volumeListenerAttached) return;
+    if (video._mediaListenerAttached) return;
 
-    console.log("🎵 Attaching volume change listener");
     videoPlayer.setVolume(40);
 
     video.addEventListener("volumechange", () => {
@@ -268,17 +179,33 @@ const interceptVolumeControl = () => {
       window.ipc.send("volume-change", Number(volume));
     });
 
-    video._volumeListenerAttached = true;
+    // Playback state listeners
+    video.addEventListener("play", () => {
+      console.log("🎮 Media started playing - preventing sleep");
+      window.ipc.send("media-playing");
+    });
+
+    video.addEventListener("pause", () => {
+      console.log("🎮 Media paused/stopped - allowing sleep");
+      window.ipc.send("media-stopped");
+    });
+    
+    video.addEventListener("ended", () => {
+      console.log("🎮 Media paused/stopped - allowing sleep");
+      window.ipc.send("media-stopped");
+    });
+
+    video._mediaListenerAttached = true;
   }
 
   // Set up the volume listener
-  setupVolumeListener();
+  setupMediaListener();
 
   // Watch for new video elements and re-apply the listener
   function startObserver() {
     if (document.body) {
       new MutationObserver(() => {
-        setupVolumeListener();
+        setupMediaListener();
       }).observe(document.body, { childList: true, subtree: true });
     } else {
       setTimeout(startObserver, 100);
@@ -300,11 +227,8 @@ loadConnectionWarnings();
 // Load connection change events with YouTube TV server.
 loadConnectionEvents();
 
-// Monitor media playback for power save management
-monitorMediaPlayback();
-
-// Intercept volume control
-interceptVolumeControl();
+// Setup media control (playback monitoring and volume control)
+setupMediaControl();
 
 console.log(
   "JavaScript enhancements loaded at",

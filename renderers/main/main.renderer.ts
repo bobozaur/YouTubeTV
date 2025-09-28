@@ -80,7 +80,7 @@ export class Renderer {
       this.preventSleep();
     });
 
-    ipcMain.on("media-paused", () => {
+    ipcMain.on("media-stopped", () => {
       this.allowSleep();
     });
   }
