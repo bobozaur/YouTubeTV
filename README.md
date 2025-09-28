@@ -4,7 +4,7 @@
 # **YouTube TV**
 
 [![Downloads](https://img.shields.io/github/downloads/marcosrg9/YouTubeTV/total.svg?color=FF0000&label=Total%20downloads)](https://github.com/marcosrg9/YouTubeTV/releases/)
-[![Downloads](https://img.shields.io/github/downloads/marcosrg9/YouTubeTV/v2.4.1/total.svg?color=blue&label=2.4.1%20Downloads)](https://github.com/marcosrg9/YouTubeTV/releases/tag/v2.4.1)
+[![Downloads](https://img.shields.io/github/downloads/marcosrg9/YouTubeTV/v2.5.0/total.svg?color=blue&label=2.5.0%20Downloads)](https://github.com/marcosrg9/YouTubeTV/releases/tag/v2.5.0)
 
 Simple YouTube TV Client for Linux desktop based on [electron](https://www.electronjs.org/). You can connect a compatible device such as a phone or computer with Google Chrome and send videos to the app for viewing, just like on ChromeCast or smart TVs with YouTube.
 
@@ -28,9 +28,20 @@ If you already have electron installed globally, you can start the app with `ele
 - Max. resolution config panel: <kbd>Ctrl</kbd> + <kbd>S</kbd>
 - Developer Tools: <kbd>Ctrl</kbd> + <kbd>D</kbd>.
 
-Tested on Linux x64, ARM64, and ARMv7l (Raspberry Pi) platforms.
+Tested on Linux x64 and ARM64 platforms.
 
-## ⚡️ Last changes [2.4.0/2.4.1]
+## ⚡️ Last changes [2.5.0]
+
+### **2.5.0**
+
+- Converted all Spanish comments to English for better maintainability
+- Removed all Mac and Windows specific code, assets, and build configurations
+- Optimized media control system by combining playback monitoring and volume control
+- Added system volume control and idle inhibition
+- Linux-only build with simplified configuration
+- Fix release workflow
+
+## ⚡️ Previous changes [2.4.0/2.4.1]
 
 ### **2.4.1**
 
