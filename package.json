@@ -21,6 +21,7 @@
         "express": "^4.17.1",
         "hosted-git-info": "^5.1.0",
         "lodash": "^4.17.21",
+        "loudness": "^0.4.2",
         "node-uuid": "^1.4.8",
         "normalize-url": "^7.0.2",
         "path-parse": "^1.0.7",

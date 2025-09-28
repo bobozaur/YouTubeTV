@@ -162,13 +162,6 @@ const loadConnectionEvents = () => {
   });
 };
 
-const listenLocalStorageQueries = () => {
-  window.ipc.on("localStorageQuery", (event, { type, data }) => {
-    const inf = window.localStorage.getItem(data);
-    event.sender.send("localStorageQueryResponse", inf);
-  });
-};
-
 /**
  * Monitor media playback state to control power save blocking
  */
@@ -261,53 +254,46 @@ const monitorMediaPlayback = () => {
  * Intercept volume control and redirect to system volume
  */
 const interceptVolumeControl = () => {
-  // Intercept any programmatic volume changes to the video elements
-  const interceptVolumeProperty = () => {    
-    const videos = document.querySelectorAll("video");
-    videos.forEach((video) => {
-      if (!video.hasAttribute("data-volume-intercepted")) {
-        // Override the volume property
-        Object.defineProperty(video, "volume", {
-          get: function () {
-            return 1.0; // Always report max volume
-          },
-          set: function (value) {
-            window.ipc.send("volume-change", value);
-            console.log(`Bypassing volume change to system: ${value}`);
-          },
-          configurable: true,
-        });
+  console.log("🔊 Volume control script loaded");
 
-        video.setAttribute("data-volume-intercepted", "true");
-      }
+  function setupVolumeListener() {
+    const videoPlayer = document.querySelector(".html5-video-player");
+    const video = videoPlayer ? videoPlayer.querySelector("video") : null;
+
+    if (!video) {
+      setTimeout(setupVolumeListener, 500);
+      return;
+    }
+
+    if (video._volumeListenerAttached) return;
+
+    console.log("🎵 Attaching volume change listener");
+    videoPlayer.setVolume(40);
+
+    video.addEventListener("volumechange", () => {
+      const volume = videoPlayer.getVolume();
+      console.log("🔊 Volume changed:", volume);
+      window.ipc.send("volume-change", Number(volume));
     });
-  };
 
-  // Apply volume interception to existing and new videos
-  const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-      mutation.addedNodes.forEach((node) => {
-        if (node.nodeType === 1) {
-          if (node.tagName === "VIDEO") {
-            setTimeout(interceptVolumeProperty, 100);
-          } else if (node.querySelectorAll) {
-            const videos = node.querySelectorAll("video");
-            if (videos.length > 0) {
-              setTimeout(interceptVolumeProperty, 100);
-            }
-          }
-        }
-      });
-    });
-  });
+    video._volumeListenerAttached = true;
+  }
 
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-  });
+  // Set up the volume listener
+  setupVolumeListener();
 
-  // Initial setup
-  setTimeout(interceptVolumeProperty(), 1000);
+  // Watch for new video elements and re-apply the listener
+  function startObserver() {
+    if (document.body) {
+      new MutationObserver(() => {
+        setupVolumeListener();
+      }).observe(document.body, { childList: true, subtree: true });
+    } else {
+      setTimeout(startObserver, 100);
+    }
+  }
+
+  startObserver();
 };
 
 // Carga la anulación de eventos de cambios de visibilidad.
@@ -321,9 +307,6 @@ loadConnectionWarnings();
 
 // Carga los eventos de cambio de conexión con el servidor de YouTube TV.
 loadConnectionEvents();
-
-// Escucha las peticiones de consultas al localStorage.
-listenLocalStorageQueries();
 
 // Monitor media playback for power save management
 monitorMediaPlayback();

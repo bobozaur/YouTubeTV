@@ -2,7 +2,7 @@ import { readFile } from "fs/promises";
 import { platform } from "os";
 import { cwd } from "process";
 import { join } from "path";
-import { Settings } from "../settings/settings.renderer";
+
 import { exec } from "child_process";
 
 import {
@@ -14,17 +14,7 @@ import {
   ipcMain,
   powerSaveBlocker,
 } from "electron";
-
-export interface resolution {
-  /** Screen width */
-  width: number;
-  /** Screen height */
-  height: number;
-}
-
-interface windowParams {
-  bounds: Electron.Rectangle;
-}
+import { setVolume } from "loudness";
 
 export class Renderer {
   /** userAgent allowed by YouTube TV. */
@@ -33,13 +23,10 @@ export class Renderer {
 
   /** Electron process */
   private window: BrowserWindow;
-  
-  private powerSaveManager: PowerSaveManager;
-  
-  private volumeManager: VolumeManager;
 
-  /** Settings window */
-  private settings: Settings | null;
+  private powerSaveManager: PowerSaveManager;
+
+  private volumeManager: VolumeManager;
 
   /** YouTube TV url with path/params */
   private readonly _url: string = "https://www.youtube.com/tv?";
@@ -58,21 +45,13 @@ export class Renderer {
       .on("ready", () => {
         this.createWindow();
 
-        this.listenWindowMoveEvents();
-
         this.url = "__DFT__";
 
         this.window.webContents.on("dom-ready", () =>
           this.injectJSCode.bind(this),
         );
 
-        this.setAccelerators();
-
         this.window.on("close", () => {
-          if (this.settings) {
-            this.settings.destroy();
-            this.settings = null;
-          }
           // Cleanup power save manager
           if (this.powerSaveManager) {
             this.powerSaveManager.cleanup();
@@ -102,11 +81,9 @@ export class Renderer {
         backgroundThrottling: false,
       },
     });
-    
+
     this.powerSaveManager = new PowerSaveManager();
     this.volumeManager = new VolumeManager();
-
-    process.nextTick(() => this.loadSettings());
   }
 
   /**
@@ -145,154 +122,9 @@ export class Renderer {
     }
   }
 
-  public setMaxRes(params: { width: number; height: number; reload: boolean }) {
-    const { width, height, reload } = params;
-
-    this.localStorageQuery("set", "maxRes", { width, height });
-
-    if (reload) {
-      this.setResEmulator(width, height);
-      this.window.webContents.reload();
-    } else this.updateWindowParams();
-  }
-
-  /** Emulate a screen with assigned parameters */
-  private setResEmulator(emuWidth: number = 3840, emuHeight: number = 2160) {
-    // Delete all listeners.
-    this.window.removeAllListeners("resize");
-
-    // Performs an initial calculation.
-    this.calcEmulatedDisplay(emuWidth, emuHeight);
-
-    // Add a listener to the window to recalculate the emulator.
-    this.window.on("resize", () => {
-      this.calcEmulatedDisplay(emuWidth, emuHeight);
-      this.updateWindowParams();
-    });
-  }
-
-  private calcEmulatedDisplay(emuWidth: number, emuHeight: number) {
-    // Get the current window size.
-    const [width, height] = this.window.getSize();
-
-    this.window.webContents.disableDeviceEmulation();
-
-    this.window.webContents.enableDeviceEmulation({
-      screenSize: { width: emuWidth, height: emuHeight },
-      viewSize: { width: width / emuWidth, height: height / emuHeight },
-      scale: width / emuWidth,
-      screenPosition: "mobile",
-      viewPosition: { x: 0.5, y: 0.5 },
-      deviceScaleFactor: 0,
-    });
-  }
-
   /**
-   * Listen keyboard shortcuts to perform some actions.
-   */
-  private setAccelerators() {
-    // globalShortcut.register("ctrl+d", () => {
-    //   this.window.webContents.toggleDevTools();
-    // });
-  }
-
-  /**
-   * Performs a query to the local storage of the renderer process.
-   * @param type Query type.
-   * @param key Key of the object to be stored in the localStorage.
-   * @param value Value to be set for the given key.
-   */
-  public async localStorageQuery(
-    type: "set",
-    key: string,
-    value: any,
-  ): Promise<any>;
-  public async localStorageQuery(type: "delete", key: any): Promise<any>;
-  public async localStorageQuery(type: "get", key: any): Promise<any>;
-  public async localStorageQuery(type: "clear"): Promise<any>;
-  public async localStorageQuery(type: "raw", data: string): Promise<any>;
-  public async localStorageQuery(
-    type: "get" | "set" | "delete" | "clear" | "raw",
-    key?: string,
-    value?: any,
-    data?: string,
-  ): Promise<any> {
-    if (
-      type === "get" ||
-      type === "set" ||
-      type === "delete" ||
-      type === "clear" ||
-      type === "raw"
-    ) {
-      let query = "localStorage.";
-
-      if (type === "get") query += `getItem('${key}')`;
-      else if (type === "set") {
-        if (typeof value === "object") value = `'${JSON.stringify(value)}'`;
-        query += `setItem('${key}', ${value})`;
-      } else if (type === "delete") query += `removeItem('${key}')`;
-      else if (type === "clear") query += "clear()";
-      else if (type === "raw") query = data as string;
-
-      const unresolvedQuery = this.window.webContents.executeJavaScript(query);
-
-      if (type === "get") {
-        try {
-          const resolver = await unresolvedQuery;
-          const parsed = JSON.parse(resolver);
-          return Promise.resolve(parsed);
-        } catch (error) {
-          return unresolvedQuery;
-        }
-      } else return unresolvedQuery;
-    } else return Promise.reject("unknown query type");
-  }
-
-  private listenWindowMoveEvents() {
-    this.window.on("moved", () => {
-      this.updateWindowParams();
-    });
-  }
-
-  private getWindowParams() {
-    const bounds = this.window.getBounds();
-
-    return { bounds } as windowParams;
-  }
-
-  private updateWindowParams() {
-    const params = this.getWindowParams();
-    this.localStorageQuery("set", "windowParams", params);
-  }
-
-  private loadSettings() {
-    this.localStorageQuery("get", "windowParams").then((data: windowParams) => {
-      this.window.setBounds(data.bounds);
-
-      this.window.on("resized", () => {
-        this.updateWindowParams();
-      });
-    });
-
-    this.localStorageQuery("get", "maxRes")
-      .then((data: resolution) => {
-        // If the usen has not set a resolution, set the default one.
-        if (!data) this.setResEmulator();
-        else {
-          if (data.width && data.height)
-            this.setResEmulator(data.width, data.height);
-          else this.setResEmulator();
-        }
-      })
-      .catch((err) => {
-        // If the data is invalid or not available, set the default resolution.
-        this.setResEmulator(3840, 2160);
-      });
-  }
-
-  /**
-   * Load new user connection **and reload the renderer process**.\
-   * If value is '\_\_DFT\_\_', the default YouTube TV url will be loaded.
+   * Load new user connection **and reload the renderer process**.
+   * If value is '__DFT__', the default YouTube TV url will be loaded.
    * */
   public set url(value: string) {
     let url = value;
@@ -393,17 +225,7 @@ class VolumeManager {
     });
   }
 
-  private adjustSystemVolume(change: string) {
-    const command = `wpctl set-volume @DEFAULT_AUDIO_SINK@ ${change} --limit 1.0`;
-    exec(command, (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Volume control error: ${error.message}`);
-        return;
-      }
-      if (stderr) {
-        console.error(`Volume control stderr: ${stderr}`);
-        return;
-      }
-    });
+  private async adjustSystemVolume(change: number) {
+    await setVolume(change);
   }
 }
