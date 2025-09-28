@@ -1,5 +1,4 @@
 import { readFile } from "fs/promises";
-import { platform } from "os";
 import { cwd } from "process";
 import { join } from "path";
 import { setVolume } from "loudness";
@@ -31,9 +30,6 @@ export class Renderer {
   /** JavaScript injection code */
   private jsic: string = "";
 
-  /** JavaScript injection title bar styles */
-  private titleBar: string = "";
-
   constructor() {
     // Set app menu to null.
     Menu.setApplicationMenu(null);
@@ -62,7 +58,7 @@ export class Renderer {
     this.window = new BrowserWindow({
       width: 1230,
       height: 720,
-      titleBarStyle: platform() === "darwin" ? "hiddenInset" : "default",
+      titleBarStyle: "default",
       fullscreen: false,
       fullscreenable: true,
       title: "YouTube TV",
@@ -128,9 +124,8 @@ export class Renderer {
 
   /**
    * Inject a JavaScript code into the renderer process to patch events and add some features.
-   * @param script Type of script to be injected.
    * */
-  private async injectJSCode(script: "all" | "patchs" | "titlebar" = "all") {
+  private async injectJSCode() {
     try {
       if (this.jsic === "") {
         this.jsic = await readFile(join(__dirname, "injection.js"), {
@@ -138,24 +133,7 @@ export class Renderer {
         });
       }
 
-      if (platform() === "darwin" && this.titleBar === "") {
-        this.titleBar = await readFile(join(__dirname, "titleBar.js"), {
-          encoding: "utf8",
-        });
-      }
-
-      if (script === "all") {
-        this.window.webContents.executeJavaScript(this.jsic);
-        platform() === "darwin"
-          ? this.window.webContents.executeJavaScript(this.titleBar)
-          : false;
-      } else if (script === "patchs") {
-        this.window.webContents.executeJavaScript(this.jsic);
-      } else if (script === "titlebar") {
-        platform() === "darwin"
-          ? this.window.webContents.executeJavaScript(this.titleBar)
-          : false;
-      }
+      this.window.webContents.executeJavaScript(this.jsic);
     } catch (error) {
       debugger;
       // throw new Error(error as unknown as any);
@@ -182,7 +160,6 @@ export class Renderer {
           this.url = value;
         });
 
-        this.injectJSCode("titlebar");
         const offline = await readFile(join(__dirname, "offline_banner.js"), {
           encoding: "utf8",
         });
@@ -205,7 +182,6 @@ export class Renderer {
           this.urlByDial = value;
         });
 
-        this.injectJSCode("titlebar");
         const offline = await readFile(join(__dirname, "offline_banner.js"), {
           encoding: "utf8",
         });

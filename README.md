@@ -2,43 +2,43 @@
 <img src="./build/icon.png" width=90px>
 
 # **YouTube TV**
+
 [![Downloads](https://img.shields.io/github/downloads/marcosrg9/YouTubeTV/total.svg?color=FF0000&label=Total%20downloads)](https://github.com/marcosrg9/YouTubeTV/releases/)
 [![Downloads](https://img.shields.io/github/downloads/marcosrg9/YouTubeTV/v2.4.1/total.svg?color=blue&label=2.4.1%20Downloads)](https://github.com/marcosrg9/YouTubeTV/releases/tag/v2.4.1)
 
-Simple YouTube TV Client for desktop based on [electron](https://www.electronjs.org/). You can connect a compatible device such as a phone or computer with Google Chrome and send videos to the app for viewing, just like on ChromeCast or smart TVs with YouTube.
+Simple YouTube TV Client for Linux desktop based on [electron](https://www.electronjs.org/). You can connect a compatible device such as a phone or computer with Google Chrome and send videos to the app for viewing, just like on ChromeCast or smart TVs with YouTube.
 
 <img src="./readme/demo_player.png" width="600px">
 
 </div><br>
 
-## 🌎 Languages
-
-This readme is available in the following languages:
-
-- 🇺🇸 English
-- 🇪🇸 [Spanish](./README.es-ES.md)
-
 It implements a [DIAL](https://en.wikipedia.org/wiki/Discovery_and_Launch) server (based in [SSDP](https://en.wikipedia.org/wiki/Simple_Service_Discovery_Protocol)) to allow connection from devices that use this same protocol (limited to YouTube in this application).
 
 Use the userAgent allowed by YouTube TV:
+
 ```
 Mozilla/5.0 (X11; Linux i686) AppleWebKit/534.24 (KHTML, like Gecko) Chrome/11.0.696.77 Large Screen Safari/534.24 GoogleTV/092754
 ```
-It can use ```npm start``` or else ```npx electron .``` .
-If you already have electron installed globally, you can start the app with ```electron .```
+
+You can use `npm start` or `npx electron .` to start the application.
+If you already have electron installed globally, you can start the app with `electron .`
 
 ## ⌨️ Key shortcuts
+
 - Max. resolution config panel: <kbd>Ctrl</kbd> + <kbd>S</kbd>
 - Developer Tools: <kbd>Ctrl</kbd> + <kbd>D</kbd>.
 
-Not tested on Windows and macOS for ARM platforms, except for ARM Linux for Raspberry (armv7l).
+Tested on Linux x64, ARM64, and ARMv7l (Raspberry Pi) platforms.
 
 ## ⚡️ Last changes [2.4.0/2.4.1]
+
 ### **2.4.1**
-- Fixed bug where the YouTube TV process would not close completely on platforms other than macOS.
-- The title bar is transparent (macOS only).
-- The title bar of the window did not load the Spanish title.
+
+- Fixed bug where the YouTube TV process would not close completely.
+- Improved Linux-specific optimizations.
+
 ### **2.4.0**
+
 - YouTube TV persistently stores parameters of the main window state, such as position, size, full screen and cursor visibility.
 
 ## 🔧 Configuration
@@ -46,13 +46,14 @@ Not tested on Windows and macOS for ARM platforms, except for ARM Linux for Rasp
 YouTube TV now includes a window for configuring the maximum playback resolution.
 
 This window can be opened by pressing the keys <kbd>Ctrl</kbd> + <kbd>S</kbd>.
+
 <div align="center">
 <img src="./readme/settings.png" width="300">
 </div>
 Resolution has been limited from the developing environment for the following reason:
 
-Nowadays the mayority of computers are provided with integrated graphics, i.e. they share memory with the rest of the system, different to discrete graphic cards, which include their own memory modules where they have an isolated storage space without external load.
+Nowadays the majority of computers are provided with integrated graphics, i.e. they share memory with the rest of the system, different to discrete graphic cards, which include their own memory modules where they have an isolated storage space without external load.
 
-This implies more workload for the processor, and there are cases where resolutions above 2K/4K begin to affect performance at exagereted level.
+This implies more workload for the processor, and there are cases where resolutions above 2K/4K begin to affect performance at exaggerated level.
 
-Obviously the final user can establish the resolution they prefer; nevertheless, YouTube is able to measure bandwith and automatically establish the best resolution available in relation with bandwith, which can be bothering, since frequently hardware capacities aren't enough to reproduce those resolutions that high.
+Obviously the final user can establish the resolution they prefer; nevertheless, YouTube is able to measure bandwidth and automatically establish the best resolution available in relation with bandwidth, which can be bothering, since frequently hardware capacities aren't enough to reproduce those resolutions that high.

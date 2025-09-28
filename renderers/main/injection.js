@@ -1,9 +1,5 @@
-// Mensajes de estado.
+// Connection status messages.
 const msgDB = {
-  es: {
-    rest: "Vuelves a tener conexión",
-    lost: "No tienes conexión",
-  },
   en: {
     rest: "You're back online",
     lost: "You're offline",
@@ -12,13 +8,9 @@ const msgDB = {
 
 let msg = msgDB.en;
 
-Object.keys(msgDB).forEach((lang) => {
-  if (lang === navigator.language) msg = msgDB[lang];
-});
-
 /**
- * Anula los eventos de cambio de visibilidad para que se permita continuar la reproducción aún cuando
- * se cambie el foco de la ventana.
+ * Overrides visibility change events to allow continuous playback even when
+ * the window focus is changed.
  */
 const visibilityChangeOverriding = () => {
   document.addEventListener(
@@ -39,7 +31,7 @@ const visibilityChangeOverriding = () => {
 };
 
 /**
- * Observa los cambios de la etiqueta título para recuperar el título original (YouTube TV).
+ * Observes title tag changes to restore the original title (YouTube TV).
  */
 const observeTitleChanges = () => {
   document.title = "YouTube TV";
@@ -57,20 +49,20 @@ const observeTitleChanges = () => {
 };
 
 const loadConnectionWarnings = () => {
-  // Conexión restablecida.
+  // Connection restored.
   const rest = document.createElement("div");
 
-  // Conexión perdida.
+  // Connection lost.
   const lost = document.createElement("div");
 
-  // Mensajes
+  // Messages
   rest.innerHTML = `<p>${msg.rest}</p>`;
   lost.innerHTML = `<p>${msg.lost}</p>`;
 
-  // Declaración de del elemento de estilo.
+  // Style element declaration.
   const styles = document.createElement("style");
 
-  // Declaración de clases.
+  // Class declaration.
   styles.innerHTML = `
     .warning {
         position: absolute;
@@ -95,67 +87,67 @@ const loadConnectionWarnings = () => {
     .visible { transform: translate(-50%, 0%) }
     `;
 
-  // Asignación de clases.
+  // Class assignment.
   rest.classList.add("warning", "rest");
   lost.classList.add("warning", "lost");
 
-  // Asigna un identificador.
+  // Assign an identifier.
   rest.id = "rest";
   lost.id = "lost";
 
-  // Añade el aviso de conexión establecida.
+  // Add the connection restored warning.
   document.body.appendChild(rest);
 
-  // Añade el aviso de conexión perdida.
+  // Add the connection lost warning.
   document.body.appendChild(lost);
 
-  // Añade los estilos.
+  // Add the styles.
   document.body.appendChild(styles);
 };
 
 /**
- * Escucha eventos de cambio de estado de conexión al servidor de YouTube TV (para versiones posteriores).
- * Se dispara cuando pierde conexión al servidor y cuando se recupera.
+ * Listens to connection state change events to YouTube TV server (for later versions).
+ * Triggered when connection to server is lost and when it's restored.
  */
 const loadConnectionEvents = () => {
-  // Carga el IPC de electron.
+  // Load electron IPC.
   window.ipc = window.require("electron").ipcRenderer;
 
-  // Declara el aviso de restauración de conexión.
+  // Declare connection restoration warning.
   const rest = document.getElementById("rest");
 
-  // Declara el aviso de pérdida de conexión.
+  // Declare connection lost warning.
   const lost = document.getElementById("lost");
 
-  // Carga el evento de conexión.
+  // Load connection event.
   window.addEventListener("online", () => {
-    // Elimina el aviso de conexión perdida.
+    // Remove connection lost warning.
     lost.classList.remove("visible");
 
-    // Añade la clase visible.
+    // Add visible class.
     rest.classList.add("visible");
 
-    // Emite al renderizador (?)
+    // Emit to renderer
     window.ipc.send("network", "online");
 
-    // Elimina la clase visible pasados los 5 segundos.
+    // Remove visible class after 5 seconds.
     setTimeout(() => {
       rest.classList.remove("visible");
     }, 5000);
   });
 
-  // Carga el evento de pérdida de conexión.
+  // Load connection lost event.
   window.addEventListener("offline", () => {
-    // Elimina la clase visible.
+    // Remove visible class.
     rest.classList.remove("visible");
 
-    // Añade la clase visible.
+    // Add visible class.
     lost.classList.add("visible");
 
-    // Emite al renderizador (?)
+    // Emit to renderer
     window.ipc.send("network", "offline");
 
-    // Elimina la clase visible pasados los 5 segundos.
+    // Remove visible class after 5 seconds.
     setTimeout(() => {
       lost.classList.remove("visible");
     }, 5000);
@@ -296,16 +288,16 @@ const interceptVolumeControl = () => {
   startObserver();
 };
 
-// Carga la anulación de eventos de cambios de visibilidad.
+// Load visibility change event overrides.
 visibilityChangeOverriding();
 
-// Observa el cambio de título.
+// Observe title changes.
 observeTitleChanges();
 
-// Carga los avisos de estado de conexión.
+// Load connection status warnings.
 loadConnectionWarnings();
 
-// Carga los eventos de cambio de conexión con el servidor de YouTube TV.
+// Load connection change events with YouTube TV server.
 loadConnectionEvents();
 
 // Monitor media playback for power save management
