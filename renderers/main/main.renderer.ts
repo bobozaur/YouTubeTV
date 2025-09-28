@@ -2,8 +2,8 @@ import { readFile } from "fs/promises";
 import { platform } from "os";
 import { cwd } from "process";
 import { join } from "path";
-
-import { exec } from "child_process";
+import { setVolume } from "loudness";
+import { spawn, ChildProcess } from "child_process";
 
 import {
   app,
@@ -14,7 +14,6 @@ import {
   ipcMain,
   powerSaveBlocker,
 } from "electron";
-import { setVolume } from "loudness";
 
 export class Renderer {
   /** userAgent allowed by YouTube TV. */
@@ -24,9 +23,7 @@ export class Renderer {
   /** Electron process */
   private window: BrowserWindow;
 
-  private powerSaveManager: PowerSaveManager;
-
-  private volumeManager: VolumeManager;
+  private sleepInhibitor: ChildProcess | null = null;
 
   /** YouTube TV url with path/params */
   private readonly _url: string = "https://www.youtube.com/tv?";
@@ -52,10 +49,7 @@ export class Renderer {
         );
 
         this.window.on("close", () => {
-          // Cleanup power save manager
-          if (this.powerSaveManager) {
-            this.powerSaveManager.cleanup();
-          }
+          this.allowSleep();
         });
       })
       .on("window-all-closed", () => {
@@ -82,8 +76,54 @@ export class Renderer {
       },
     });
 
-    this.powerSaveManager = new PowerSaveManager();
-    this.volumeManager = new VolumeManager();
+    ipcMain.on("volume-change", (_, change) => {
+      setVolume(change);
+    });
+
+    ipcMain.on("media-playing", () => {
+      this.preventSleep();
+    });
+
+    ipcMain.on("media-paused", () => {
+      this.allowSleep();
+    });
+  }
+
+  private preventSleep() {
+    if (this.sleepInhibitor) return;
+
+    const wtype = spawn("wtype", ["-k", "F24"]);
+    wtype.on("error", (err) => {
+      console.error("Failed to execute wtype command:", err);
+    });
+
+    this.sleepInhibitor = spawn("systemd-inhibit", [
+      "--what=idle",
+      "--why=YouTube TV playing",
+      "sleep",
+      "infinity",
+    ]);
+
+    this.sleepInhibitor.on("error", (err) => {
+      console.error("Failed to start sleep inhibitor:", err);
+    });
+
+    this.sleepInhibitor.on("exit", (code, signal) => {
+      console.log(
+        `Sleep inhibitor process exited with code ${code} and signal ${signal}`,
+      );
+      this.sleepInhibitor = null;
+    });
+
+    console.log("Sleep prevention enabled - media is playing");
+  }
+
+  private allowSleep() {
+    if (this.sleepInhibitor) {
+      this.sleepInhibitor.kill();
+      this.sleepInhibitor = null;
+      console.log("Sleep prevention disabled - media is paused");
+    }
   }
 
   /**
@@ -171,61 +211,5 @@ export class Renderer {
         });
         this.window.webContents.executeJavaScript(offline);
       });
-  }
-}
-
-class PowerSaveManager {
-  private blockerId: number | null = null;
-  private isBlocking: boolean = false;
-
-  constructor() {
-    this.setupIpcHandlers();
-  }
-
-  private setupIpcHandlers() {
-    ipcMain.on("media-playing", () => {
-      this.preventSleep();
-    });
-
-    ipcMain.on("media-paused", () => {
-      this.allowSleep();
-    });
-  }
-
-  private preventSleep() {
-    if (!this.isBlocking) {
-      this.blockerId = powerSaveBlocker.start("prevent-display-sleep");
-      this.isBlocking = true;
-      console.log("Sleep prevention enabled - media is playing");
-    }
-  }
-
-  private allowSleep() {
-    if (this.isBlocking && this.blockerId !== null) {
-      powerSaveBlocker.stop(this.blockerId);
-      this.blockerId = null;
-      this.isBlocking = false;
-      console.log("Sleep prevention disabled - media is paused");
-    }
-  }
-
-  public cleanup() {
-    this.allowSleep();
-  }
-}
-
-class VolumeManager {
-  constructor() {
-    this.setupIpcHandlers();
-  }
-
-  private setupIpcHandlers() {
-    ipcMain.on("volume-change", (_, change) => {
-      this.adjustSystemVolume(change);
-    });
-  }
-
-  private async adjustSystemVolume(change: number) {
-    await setVolume(change);
   }
 }
