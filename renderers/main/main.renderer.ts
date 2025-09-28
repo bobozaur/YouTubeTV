@@ -56,9 +56,10 @@ export class Renderer {
   /** Create a new renderer window. */
   private createWindow() {
     this.window = new BrowserWindow({
-      width: 1230,
-      height: 720,
+      width: 800,
+      height: 600,
       titleBarStyle: "default",
+      minimizable: true,
       fullscreen: false,
       fullscreenable: true,
       title: "YouTube TV",
@@ -70,6 +71,10 @@ export class Renderer {
         contextIsolation: false,
         backgroundThrottling: false,
       },
+    });
+    
+    this.window.once('ready-to-show', () => {
+      this.window.minimize();
     });
 
     ipcMain.on("volume-change", (_, change) => {
