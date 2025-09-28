@@ -23,11 +23,6 @@ Mozilla/5.0 (X11; Linux i686) AppleWebKit/534.24 (KHTML, like Gecko) Chrome/11.0
 You can use `npm start` or `npx electron .` to start the application.
 If you already have electron installed globally, you can start the app with `electron .`
 
-## ⌨️ Key shortcuts
-
-- Max. resolution config panel: <kbd>Ctrl</kbd> + <kbd>S</kbd>
-- Developer Tools: <kbd>Ctrl</kbd> + <kbd>D</kbd>.
-
 Tested on Linux x64 and ARM64 platforms.
 
 ## ⚡️ Last changes [2.5.0]
@@ -39,6 +34,7 @@ Tested on Linux x64 and ARM64 platforms.
 - Optimized media control system by combining playback monitoring and volume control
 - Added system volume control and idle inhibition
 - Linux-only build with simplified configuration
+- Removed settings control
 - Fix release workflow
 
 ## ⚡️ Previous changes [2.4.0/2.4.1]
@@ -51,20 +47,3 @@ Tested on Linux x64 and ARM64 platforms.
 ### **2.4.0**
 
 - YouTube TV persistently stores parameters of the main window state, such as position, size, full screen and cursor visibility.
-
-## 🔧 Configuration
-
-YouTube TV now includes a window for configuring the maximum playback resolution.
-
-This window can be opened by pressing the keys <kbd>Ctrl</kbd> + <kbd>S</kbd>.
-
-<div align="center">
-<img src="./readme/settings.png" width="300">
-</div>
-Resolution has been limited from the developing environment for the following reason:
-
-Nowadays the majority of computers are provided with integrated graphics, i.e. they share memory with the rest of the system, different to discrete graphic cards, which include their own memory modules where they have an isolated storage space without external load.
-
-This implies more workload for the processor, and there are cases where resolutions above 2K/4K begin to affect performance at exaggerated level.
-
-Obviously the final user can establish the resolution they prefer; nevertheless, YouTube is able to measure bandwidth and automatically establish the best resolution available in relation with bandwidth, which can be bothering, since frequently hardware capacities aren't enough to reproduce those resolutions that high.
