@@ -171,7 +171,10 @@ const setupMediaControl = () => {
 
     if (video._mediaListenerAttached) return;
 
-    videoPlayer.setVolume(40);
+    window.ipc.invoke("get-volume").then((currentVolume) => {
+      console.log("🔊 Initial volume:", currentVolume);
+      videoPlayer.setVolume(currentVolume);
+    });
 
     video.addEventListener("volumechange", () => {
       const volume = videoPlayer.getVolume();
@@ -189,7 +192,7 @@ const setupMediaControl = () => {
       console.log("🎮 Media paused/stopped - allowing sleep");
       window.ipc.send("media-stopped");
     });
-    
+
     video.addEventListener("ended", () => {
       console.log("🎮 Media paused/stopped - allowing sleep");
       window.ipc.send("media-stopped");

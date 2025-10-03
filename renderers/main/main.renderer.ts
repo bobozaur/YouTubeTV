@@ -1,7 +1,7 @@
 import { readFile } from "fs/promises";
 import { cwd } from "process";
 import { join } from "path";
-import { setVolume } from "loudness";
+import { getVolume, setVolume } from "loudness";
 import { spawn, ChildProcess } from "child_process";
 
 import {
@@ -40,9 +40,10 @@ export class Renderer {
 
         this.url = "__DFT__";
 
-        this.window.webContents.on("dom-ready", () =>
-          this.injectJSCode.bind(this),
-        );
+        this.window.webContents.on("dom-ready", () => {
+          this.injectJSCode.bind(this);
+          this.window.minimize();
+        });
 
         this.window.on("close", () => {
           this.allowSleep();
@@ -72,9 +73,9 @@ export class Renderer {
         backgroundThrottling: false,
       },
     });
-    
-    this.window.once('ready-to-show', () => {
-      this.window.minimize();
+
+    ipcMain.handle("get-volume", () => {
+      return getVolume();
     });
 
     ipcMain.on("volume-change", (_, change) => {
