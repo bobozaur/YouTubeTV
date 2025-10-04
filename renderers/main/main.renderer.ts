@@ -42,7 +42,6 @@ export class Renderer {
 
         this.window.webContents.on("dom-ready", () => {
           this.injectJSCode.bind(this);
-          this.window.minimize();
         });
 
         this.window.on("close", () => {
