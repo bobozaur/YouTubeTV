@@ -30,9 +30,6 @@ jobs:
       - name: Compile to Javascript
         run: npm run compile
 
-      - name: Create build directory
-        run: mkdir -p ../YTV_Builds
-
       - name: Build Linux packages
         run: npm run build:linux
         env:

@@ -35,12 +35,18 @@
     "appId": "com.youtube.tv",
     "asar": true,
     "directories": {
-      "output": "../YTV_Builds"
+      "output": "YTV_Builds"
     },
     "linux": {
       "target": "deb",
       "icon": "build/icon.icns",
-      "packageCategory": "Video"
+      "category": "Video",
+      "publish": [
+        {
+          "provider": "github",
+          "releaseType": "release"
+        }
+      ]
     }
   },
   "author": "Marcos Rodríguez <marcosylrg@gmail.com>"

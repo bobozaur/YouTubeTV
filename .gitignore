@@ -4,3 +4,4 @@ dist/
 *.js
 !renderers/main/injection.js
 !renderers/main/offline_banner.js
+YTV_Builds/

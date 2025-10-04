@@ -72,7 +72,6 @@ export class Renderer {
       fullscreenable: true,
       title: "YouTube TV",
       backgroundColor: "#282828",
-      icon: nativeImage.createFromPath(join(cwd(), "build", "icon.png")),
       show: false,
       webPreferences: {
         nodeIntegration: true,
@@ -102,7 +101,21 @@ export class Renderer {
   /** Create system tray icon with menu */
   private createTray() {
     this.tray = new Tray(
-      nativeImage.createFromPath(join(cwd(), "build", "icon.png")),
+      nativeImage.createFromDataURL(`data:image/png;base64,
+        iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAAIGNIUk0AAHomAACAhAAA+gAAAIDo
+        AAB1MAAA6mAAADqYAAAXcJy6UTwAAAEyUExURQAAAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8A
+        AP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8A
+        AP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8A
+        AP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8A
+        AP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8yMv84OP8CAv9oaP/p6f+Jif8hIf9nZ//////+/v/W1v9q
+        av8REf/7+//Bwf9CQv/5+f+6uv89Pf/9/f/Q0P9hYf8ODv/l5f+Bgf8cHP8uLv8BAfGuN1oAAABJ
+        dFJOUwAAARIrPUpVXWRpbG9oY1RJOyoRA1rK6/X6/fTqyVsESOlMnqPP4efv+Pz78uTIzZyhROYC
+        UcDw9/7xxVcNIzRBS19lTUM2JQ8OQuhaAAAAAWJLR0RSDWAtkAAAAAlwSFlzAAAXEQAAFxEByibz
+        PwAAAAd0SU1FB+kKBAg7HWnqvUUAAADWSURBVCjPY2CgHmBkYmZhZWPn4OTi5uHh5uXj4BcQFBJm
+        YmQQERUTl5CU8oQDKUlpGVk5eQYFRU8sQFyJQdkTK1BhkMUuocqgBmN6efsgSagzaMCYvn7+AQgJ
+        aQZNGDMwKDgkNAzG02LQQkgEBYVHRMK4qBJR0TFwCSSjYuPiE2A8bSTLE5OSEZbrIJyb4pWK5Fxd
+        Bj3sHtRnMMAuYchgZIxNXJGNwcTUTNfcQlLKEiJiKaVtYWVsbSMCjChbO3sHR35RJz5nZz4nOXYX
+        Vzd3D2BEUQ8AAPIFa+xnRiUsAAAAAElFTkSuQmCC`),
     );
     
     const contextMenu = Menu.buildFromTemplate([
