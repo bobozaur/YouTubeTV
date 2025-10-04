@@ -35,9 +35,10 @@ Tested on Linux x64 and ARM64 platforms.
 - Added system volume control and idle inhibition
 - Linux-only build with simplified configuration
 - Removed settings control
-- Allow playback while minimized
-- Start minimized
 - Fix release workflow
+- Added system tray icon to allow background playback
+- App goes to tray instead when minimized
+- Starts minimized to tray by default
 
 ## ⚡️ Previous changes [2.4.0/2.4.1]
 

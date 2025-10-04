@@ -8,10 +8,9 @@ import {
   app,
   BrowserWindow,
   nativeImage,
-  globalShortcut,
   Menu,
   ipcMain,
-  powerSaveBlocker,
+  Tray,
 } from "electron";
 
 export class Renderer {
@@ -22,6 +21,10 @@ export class Renderer {
   /** Electron process */
   private window: BrowserWindow;
 
+  /** Tray icon */
+  private tray: Tray;
+
+  /** Sleep inhibitor process */
   private sleepInhibitor: ChildProcess | null = null;
 
   /** YouTube TV url with path/params */
@@ -34,23 +37,28 @@ export class Renderer {
     // Set app menu to null.
     Menu.setApplicationMenu(null);
 
-    app
-      .on("ready", () => {
-        this.createWindow();
+    app.on("ready", () => {
+      this.createWindow();
+      this.createTray();
 
-        this.url = "__DFT__";
+      this.url = "__DFT__";
 
-        this.window.webContents.on("dom-ready", () => {
-          this.injectJSCode.bind(this);
-        });
-
-        this.window.on("close", () => {
-          this.allowSleep();
-        });
-      })
-      .on("window-all-closed", () => {
-        app.quit();
+      this.window.webContents.on("dom-ready", () => {
+        this.injectJSCode.bind(this);
       });
+
+      this.window.on("minimize", () => {
+        this.window.restore();
+        this.window.hide();
+      });
+
+      this.window.on("close", () => {
+        this.allowSleep();
+      });
+    })
+    .on("window-all-closed", () => {
+      app.quit();
+    });
   }
 
   /** Create a new renderer window. */
@@ -65,6 +73,7 @@ export class Renderer {
       title: "YouTube TV",
       backgroundColor: "#282828",
       icon: nativeImage.createFromPath(join(cwd(), "build", "icon.png")),
+      show: false,
       webPreferences: {
         nodeIntegration: true,
         webSecurity: true,
@@ -87,6 +96,35 @@ export class Renderer {
 
     ipcMain.on("media-stopped", () => {
       this.allowSleep();
+    });
+  }
+
+  /** Create system tray icon with menu */
+  private createTray() {
+    this.tray = new Tray(
+      nativeImage.createFromPath(join(cwd(), "build", "icon.png")),
+    );
+    
+    const contextMenu = Menu.buildFromTemplate([
+      {
+        label: "Quit",
+        click: () => {
+          this.allowSleep();
+          app.quit();
+        },
+      },
+    ]);
+
+    this.tray.setContextMenu(contextMenu);
+    this.tray.setToolTip("YouTube TV");
+    
+    this.tray.on('click', () => {
+      if (this.window.isVisible()) {
+        this.window.hide();
+      } else {
+        this.window.show();
+        this.window.focus();
+      }
     });
   }
 
