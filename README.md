@@ -36,9 +36,8 @@ Tested on Linux x64 and ARM64 platforms.
 - Linux-only build with simplified configuration
 - Removed settings control
 - Fix release workflow
-- Added system tray icon to allow background playback
-- App goes to tray instead when minimized
-- Starts minimized to tray by default
+- Added system tray icon to allow hiding the app
+- Starts hidden to tray by default
 
 ## ⚡️ Previous changes [2.4.0/2.4.1]
 

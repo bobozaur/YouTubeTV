@@ -4,14 +4,7 @@ import { join } from "path";
 import { getVolume, setVolume } from "loudness";
 import { spawn, ChildProcess } from "child_process";
 
-import {
-  app,
-  BrowserWindow,
-  nativeImage,
-  Menu,
-  ipcMain,
-  Tray,
-} from "electron";
+import { app, BrowserWindow, nativeImage, Menu, ipcMain, Tray } from "electron";
 
 export class Renderer {
   /** userAgent allowed by YouTube TV. */
@@ -47,17 +40,9 @@ export class Renderer {
         this.injectJSCode.bind(this);
       });
 
-      this.window.on("minimize", () => {
-        this.window.restore();
-        this.window.hide();
-      });
-
       this.window.on("close", () => {
         this.allowSleep();
       });
-    })
-    .on("window-all-closed", () => {
-      app.quit();
     });
   }
 
@@ -67,9 +52,6 @@ export class Renderer {
       width: 800,
       height: 600,
       titleBarStyle: "default",
-      minimizable: true,
-      fullscreen: false,
-      fullscreenable: true,
       title: "YouTube TV",
       backgroundColor: "#282828",
       show: false,
@@ -117,21 +99,18 @@ export class Renderer {
         Bj3sHtRnMMAuYchgZIxNXJGNwcTUTNfcQlLKEiJiKaVtYWVsbSMCjChbO3sHR35RJz5nZz4nOXYX
         Vzd3D2BEUQ8AAPIFa+xnRiUsAAAAAElFTkSuQmCC`),
     );
-    
+
     const contextMenu = Menu.buildFromTemplate([
       {
         label: "Quit",
-        click: () => {
-          this.allowSleep();
-          app.quit();
-        },
+        click: app.quit,
       },
     ]);
 
     this.tray.setContextMenu(contextMenu);
     this.tray.setToolTip("YouTube TV");
-    
-    this.tray.on('click', () => {
+
+    this.tray.on("click", () => {
       if (this.window.isVisible()) {
         this.window.hide();
       } else {
