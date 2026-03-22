@@ -2,9 +2,8 @@ import { readFile } from "fs/promises";
 import { cwd } from "process";
 import { join } from "path";
 import { getVolume, setVolume } from "loudness";
-import { spawn, ChildProcess } from "child_process";
 
-import { app, BrowserWindow, nativeImage, Menu, ipcMain, Tray } from "electron";
+import { app, BrowserWindow, nativeImage, Menu, ipcMain, Tray, powerSaveBlocker } from "electron";
 
 export class Renderer {
   /** userAgent allowed by YouTube TV. */
@@ -12,13 +11,13 @@ export class Renderer {
     "Mozilla/5.0 (X11; Linux i686) AppleWebKit/534.24 (KHTML, like Gecko) Chrome/11.0.696.77 Large Screen Safari/534.24 GoogleTV/092754";
 
   /** Electron process */
-  private window: BrowserWindow;
+  public window: BrowserWindow;
 
   /** Tray icon */
   private tray: Tray;
 
-  /** Sleep inhibitor process */
-  private sleepInhibitor: ChildProcess | null = null;
+  /** Power save blocker ID, or null if not active */
+  private sleepBlockerId: number | null = null;
 
   /** YouTube TV url with path/params */
   private readonly _url: string = "https://www.youtube.com/tv?";
@@ -37,7 +36,7 @@ export class Renderer {
       this.url = "__DFT__";
 
       this.window.webContents.on("dom-ready", () => {
-        this.injectJSCode.bind(this);
+        this.injectJSCode();
       });
 
       this.window.on("close", () => {
@@ -72,11 +71,14 @@ export class Renderer {
     });
 
     ipcMain.on("media-playing", () => {
+      this.window.show();
+      this.window.setFullScreen(true);
+      this.window.focus();
       this.preventSleep();
     });
 
     ipcMain.on("media-stopped", () => {
-      this.allowSleep();
+      this.onMediaStopped();
     });
   }
 
@@ -120,39 +122,22 @@ export class Renderer {
     });
   }
 
+  public onMediaStopped() {
+    this.allowSleep();
+    this.window.setFullScreen(false);
+    this.window.hide();
+  }
+
   private preventSleep() {
-    if (this.sleepInhibitor) return;
-
-    const wtype = spawn("wtype", ["-k", "F24"]);
-    wtype.on("error", (err) => {
-      console.error("Failed to execute wtype command:", err);
-    });
-
-    this.sleepInhibitor = spawn("systemd-inhibit", [
-      "--what=idle",
-      "--why=YouTube TV playing",
-      "sleep",
-      "infinity",
-    ]);
-
-    this.sleepInhibitor.on("error", (err) => {
-      console.error("Failed to start sleep inhibitor:", err);
-    });
-
-    this.sleepInhibitor.on("exit", (code, signal) => {
-      console.log(
-        `Sleep inhibitor process exited with code ${code} and signal ${signal}`,
-      );
-      this.sleepInhibitor = null;
-    });
-
+    if (this.sleepBlockerId !== null) return;
+    this.sleepBlockerId = powerSaveBlocker.start("prevent-display-sleep");
     console.log("Sleep prevention enabled - media is playing");
   }
 
   private allowSleep() {
-    if (this.sleepInhibitor) {
-      this.sleepInhibitor.kill();
-      this.sleepInhibitor = null;
+    if (this.sleepBlockerId !== null) {
+      powerSaveBlocker.stop(this.sleepBlockerId);
+      this.sleepBlockerId = null;
       console.log("Sleep prevention disabled - media is paused");
     }
   }
@@ -168,10 +153,9 @@ export class Renderer {
         });
       }
 
-      this.window.webContents.executeJavaScript(this.jsic);
+      await this.window.webContents.executeJavaScript(this.jsic);
     } catch (error) {
-      debugger;
-      // throw new Error(error as unknown as any);
+      console.error("Injection script error:", error);
     }
   }
 

@@ -4,7 +4,7 @@
 # **YouTube TV**
 
 [![Downloads](https://img.shields.io/github/downloads/marcosrg9/YouTubeTV/total.svg?color=FF0000&label=Total%20downloads)](https://github.com/marcosrg9/YouTubeTV/releases/)
-[![Downloads](https://img.shields.io/github/downloads/marcosrg9/YouTubeTV/v2.5.0/total.svg?color=blue&label=2.5.0%20Downloads)](https://github.com/marcosrg9/YouTubeTV/releases/tag/v2.5.0)
+[![Downloads](https://img.shields.io/github/downloads/marcosrg9/YouTubeTV/v2.6.0/total.svg?color=blue&label=2.6.0%20Downloads)](https://github.com/marcosrg9/YouTubeTV/releases/tag/v2.6.0)
 
 Simple YouTube TV Client for Linux desktop based on [electron](https://www.electronjs.org/). You can connect a compatible device such as a phone or computer with Google Chrome and send videos to the app for viewing, just like on ChromeCast or smart TVs with YouTube.
 
@@ -25,7 +25,20 @@ If you already have electron installed globally, you can start the app with `ele
 
 Tested on Linux x64 and ARM64 platforms.
 
-## ⚡️ Last changes [2.5.0]
+## ⚡️ Last changes [2.6.0]
+
+### **2.6.0**
+
+- Updated Electron to v41
+- App now shows fullscreen when media plays and hides to tray when paused
+- Detects device disconnect via YouTube TV toast and pauses media automatically
+- Player volume now syncs from system volume on startup
+- Volume is preserved on device disconnect (prevents volume spike to 100%)
+- Replaced systemd-inhibit/wtype with Electron's built-in powerSaveBlocker
+- Fixed Trusted Types CSP violation with YouTube's updated security policy
+- Fixed injection script running twice on page load
+
+## ⚡️ Previous changes [2.5.0]
 
 ### **2.5.0**
 

@@ -102,6 +102,8 @@ export class Dial {
     if (app && app.pid === pid) {
       app.pid = "";
       app.state = "stopped";
+      process.renderer.window.webContents.send("pause-media");
+      process.renderer.onMediaStopped();
       // Disconnects from device.
       callback(true);
     } else {

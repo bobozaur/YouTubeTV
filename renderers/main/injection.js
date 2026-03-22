@@ -1,12 +1,12 @@
-// Connection status messages.
-const msgDB = {
-  en: {
-    rest: "You're back online",
-    lost: "You're offline",
-  },
-};
+(() => {
+if (window._yttvInjected) return;
+window._yttvInjected = true;
 
-let msg = msgDB.en;
+// Connection status messages.
+const msg = {
+  rest: "You're back online",
+  lost: "You're offline",
+};
 
 /**
  * Overrides visibility change events to allow continuous playback even when
@@ -56,14 +56,19 @@ const loadConnectionWarnings = () => {
   const lost = document.createElement("div");
 
   // Messages
-  rest.innerHTML = `<p>${msg.rest}</p>`;
-  lost.innerHTML = `<p>${msg.lost}</p>`;
+  const restP = document.createElement("p");
+  restP.textContent = msg.rest;
+  rest.appendChild(restP);
+
+  const lostP = document.createElement("p");
+  lostP.textContent = msg.lost;
+  lost.appendChild(lostP);
 
   // Style element declaration.
   const styles = document.createElement("style");
 
   // Class declaration.
-  styles.innerHTML = `
+  styles.textContent = `
     .warning {
         position: absolute;
         left: 50%;
@@ -160,9 +165,14 @@ const loadConnectionEvents = () => {
 const setupMediaControl = () => {
   console.log("🎮 Media control system loaded");
 
+  // Track the last user-set volume so we can restore it after disconnect
+  let lastVolume = null;
+
   function setupMediaListener() {
     const videoPlayer = document.querySelector(".html5-video-player");
-    const video = videoPlayer ? videoPlayer.querySelector("video") : null;
+    const video = videoPlayer
+      ? videoPlayer.querySelector("video")
+      : document.querySelector("video");
 
     if (!video) {
       setTimeout(setupMediaListener, 500);
@@ -173,29 +183,37 @@ const setupMediaControl = () => {
 
     window.ipc.invoke("get-volume").then((currentVolume) => {
       console.log("🔊 Initial volume:", currentVolume);
-      videoPlayer.setVolume(currentVolume);
+      lastVolume = currentVolume;
+      video.volume = currentVolume / 100;
+      if (videoPlayer && videoPlayer.setVolume)
+        videoPlayer.setVolume(currentVolume);
     });
 
     video.addEventListener("volumechange", () => {
-      const volume = videoPlayer.getVolume();
-      console.log("🔊 Volume changed:", volume);
+      const volume =
+        videoPlayer && videoPlayer.getVolume
+          ? videoPlayer.getVolume()
+          : Math.round(video.volume * 100);
+      lastVolume = volume;
       window.ipc.send("volume-change", Number(volume));
     });
 
-    // Playback state listeners
     video.addEventListener("play", () => {
-      console.log("🎮 Media started playing - preventing sleep");
       window.ipc.send("media-playing");
     });
 
     video.addEventListener("pause", () => {
-      console.log("🎮 Media paused/stopped - allowing sleep");
       window.ipc.send("media-stopped");
     });
 
     video.addEventListener("ended", () => {
-      console.log("🎮 Media paused/stopped - allowing sleep");
       window.ipc.send("media-stopped");
+    });
+
+    window.ipc.on("pause-media", () => {
+      if (!video.paused) {
+        video.pause();
+      }
     });
 
     video._mediaListenerAttached = true;
@@ -204,11 +222,27 @@ const setupMediaControl = () => {
   // Set up the volume listener
   setupMediaListener();
 
-  // Watch for new video elements and re-apply the listener
+  // Watch for new video elements and device disconnect toast
   function startObserver() {
     if (document.body) {
       new MutationObserver(() => {
         setupMediaListener();
+
+        // Detect "Device disconnected" toast from YouTube TV
+        const toast = document.querySelector("yt-overlay-toast-renderer");
+        if (toast && toast.textContent.includes("disconnected")) {
+          const videoPlayer = document.querySelector(".html5-video-player");
+          const video = document.querySelector("video");
+          if (video && !video.paused) {
+            if (lastVolume !== null) {
+              video.volume = lastVolume / 100;
+              if (videoPlayer && videoPlayer.setVolume)
+                videoPlayer.setVolume(lastVolume);
+              window.ipc.send("volume-change", lastVolume);
+            }
+            video.pause();
+          }
+        }
       }).observe(document.body, { childList: true, subtree: true });
     } else {
       setTimeout(startObserver, 100);
@@ -237,3 +271,4 @@ console.log(
   "JavaScript enhancements loaded at",
   new Date(Date.now()).toISOString(),
 );
+})();
