@@ -25,6 +25,37 @@ If you already have electron installed globally, you can start the app with `ele
 
 Tested on Linux x64 and ARM64 platforms.
 
+## Building Linux packages
+
+Use Node.js 22 LTS or newer and install the locked dependencies with `npm ci`.
+On Fedora, install the RPM packaging tool first:
+
+```sh
+sudo dnf install rpm-build
+npm ci
+npm run build:rpm
+```
+
+`build:rpm` builds an RPM for the host architecture without publishing it. To
+select another supported architecture, use `npm run build:rpm -- --x64` or
+`npm run build:rpm -- --arm64`. Packages are written to `YTV_Builds/`.
+
+`npm run build:linux -- --publish never` builds both DEB and RPM packages for x64
+and ARM64. On Debian/Ubuntu, RPM builds require the `rpm` package. The tag release
+workflow also builds both formats.
+
+Install a locally built Fedora RPM with:
+
+```sh
+sudo dnf install ./YTV_Builds/youtube-tv-2.6.0.x86_64.rpm
+```
+
+Use the `aarch64` RPM on ARM64 systems. DNF resolves the declared Electron runtime
+libraries and `alsa-utils`, which supplies `amixer` for system volume control.
+The package includes the desktop launcher and application icons. A graphical
+session with a system tray and working audio is required; the app starts hidden
+in the tray.
+
 ## ⚡️ Last changes [2.6.0]
 
 ### **2.6.0**

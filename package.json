@@ -9,7 +9,8 @@
     "debug": "electron . --inspect",
     "compile": "tsc",
     "build": "npm run build:linux",
-    "build:linux": "npm run compile && electron-builder --linux --x64 --arm64"
+    "build:linux": "npm run compile && electron-builder --linux --x64 --arm64",
+    "build:rpm": "npm run compile && electron-builder --linux rpm --publish never"
   },
   "dependencies": {
     "@types/express": "^4.17.13",
@@ -38,16 +39,46 @@
       "output": "YTV_Builds"
     },
     "linux": {
-      "target": "deb",
+      "target": [
+        "deb",
+        "rpm"
+      ],
       "icon": "build/icon.icns",
-      "category": "Video",
+      "category": "AudioVideo;Video",
       "publish": [
         {
           "provider": "github",
           "releaseType": "release"
         }
       ]
-    }
+    },
+    "rpm": {
+      "depends": [
+        "gtk3",
+        "libnotify",
+        "nss",
+        "libXScrnSaver",
+        "(libXtst or libXtst6)",
+        "xdg-utils",
+        "at-spi2-core",
+        "(libuuid or libuuid1)",
+        "alsa-lib",
+        "alsa-utils",
+        "libdrm",
+        "mesa-libgbm",
+        "libsecret"
+      ],
+      "fpm": [
+        "--rpm-rpmbuild-define",
+        "_build_id_links none"
+      ]
+    },
+    "files": [
+      "**/*",
+      "!fpm-dummy*.tmp"
+    ]
   },
-  "author": "Marcos Rodríguez <marcosylrg@gmail.com>"
+  "author": "Marcos Rodríguez <marcosylrg@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/bobozaur/YouTubeTV"
 }
